@@ -16,6 +16,6 @@ with DAG('generate-infographics-images', **dag_kwargs,      params={
 },) as fill_infographics_cache_dag:
     CliBashOperator(
         'anyway-etl anyway-kubectl-exec python3 \
-            main.py generate infographic_pictures --id {kwargs[params][newsflash_id]}',
+            main.py generate infographics_pictures --id {dag_kwargs[params][newsflash_id]}',
         task_id='generate-infographics-images',
     )
