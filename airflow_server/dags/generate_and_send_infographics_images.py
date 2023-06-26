@@ -1,5 +1,4 @@
 from airflow import DAG
-from airflow.models.param import Param
 import pendulum
 from anyway_etl_airflow.operators.cli_bash_operator import CliBashOperator
 import pendulum
@@ -7,6 +6,7 @@ import pendulum
 dag_kwargs = dict(
     default_args={
         'owner': 'airflow',
+        'max_active_runs': 1
     },
     start_date=pendulum.datetime(2023, 4, 1, tz="Asia/Jerusalem")
 )
