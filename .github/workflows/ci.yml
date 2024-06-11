@@ -5,6 +5,7 @@ on:
     - main
 jobs:
   ci:
+#    just for test to show it will not run on ziv-test-ci branch
     if: github.repository == 'data-for-change/anyway-etl'
     runs-on: ubuntu-latest
     steps:
