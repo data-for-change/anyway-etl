@@ -5,10 +5,10 @@ RUN wget https://download.docker.com/linux/static/stable/x86_64/docker-25.0.1.tg
     mv docker/docker /usr/local/bin/ &&\
     rm -rf docker docker-25.0.1.tgz
 RUN pip install --upgrade pip
-RUN pip install setuptools==70.3.0
 WORKDIR /srv
 COPY requirements.txt ./
 RUN pip install -r requirements.txt
+RUN pip install setuptools==70.3.0
 ARG ANYWAY_COMMIT=dev
 RUN pip install -e git+https://github.com/data-for-change/anyway@${ANYWAY_COMMIT}#egg=anyway
 COPY static_data ./static_data
