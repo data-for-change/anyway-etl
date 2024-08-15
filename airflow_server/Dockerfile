@@ -16,6 +16,7 @@ COPY pip_install_deps.sh ./
 COPY dags/ dags/
 COPY anyway_etl_airflow/ anyway_etl_airflow/
 COPY setup.py ./
+RUN pip install setuptools==70.3.0
 RUN pip install -e .
 
 ENV AIRFLOW_HOME=/var/airflow
