@@ -32,10 +32,10 @@ with DAG('update-news-flash', **dag_kwargs, schedule_interval=None,
     )
 
 with DAG('update-all-news-flash-location-only', **dag_kwargs, schedule_interval=None,
-         description='Update all news flash') as update_all_news_flash_dag:
+         description='Update all news flashes CBS Location. Use existing NewsFlash GPS coordinates') as update_all_news_flash_location_only_dag:
     CliBashOperator(
         cmd='anyway-etl anyway-kubectl-exec python3 main.py '
-        'update-news-flash update --update_cbs_location_only',
+        'update-news-flash update --use_existing_coordinates_only',
         task_id='update-all-news-flash'
     )
 
