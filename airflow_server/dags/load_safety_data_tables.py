@@ -8,9 +8,9 @@ dag_kwargs = dict(
     default_args={
         'owner': 'airflow',
     },
-    schedule_interval='@monthly',
+    schedule_interval=None,
     catchup=False,
-    start_date=pendulum.datetime(2024, 1, 1, tz="Asia/Jerusalem"),
+    start_date=days_ago(2),
 )
 
 
