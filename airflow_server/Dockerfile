@@ -1,7 +1,7 @@
-# Pulled August 8, 2021
-FROM python:3.8@sha256:caa7d8d6bfaa181f30c5a5074b81b6963246615f0140dca1d86e1e98efa99dc6
+# Pulled July 28, 2025
+FROM python@sha256:11da1db2f485e2560be9817f92932a29f68fefc332b0167e8c51ae308ee23337
 RUN apt-get update && apt-get install -y --no-install-recommends freetds-bin \
-        ldap-utils libffi6 libsasl2-2 libsasl2-modules libssl1.1 \
+        ldap-utils libffi7 libsasl2-2 libsasl2-modules libssl1.1 \
         locales lsb-release sasl2-bin sqlite3 unixodbc brotli jq
 RUN wget https://download.docker.com/linux/static/stable/x86_64/docker-25.0.1.tgz &&\
     tar xzf docker-25.0.1.tgz &&\
