@@ -67,6 +67,7 @@ jobs:
           docker push "${AIRFLOW_IMAGE_NAME}:${PUSH_TAG}" &&\
           docker tag aenginx "${NGINX_IMAGE_NAME}:${PUSH_TAG}" &&\
           docker push "${NGINX_IMAGE_NAME}:${PUSH_TAG}"
+        fi
 
     - name: deploy on tag push
       if: startsWith(github.ref, 'refs/tags/')
