@@ -1,4 +1,4 @@
-# Pulled August 8, 2021
+# Pulled July 28, 2025
 FROM python@sha256:11da1db2f485e2560be9817f92932a29f68fefc332b0167e8c51ae308ee23337
 RUN apt-get update && apt-get install -y --no-install-recommends freetds-bin \
         ldap-utils libffi7 libsasl2-2 libsasl2-modules libssl1.1 \

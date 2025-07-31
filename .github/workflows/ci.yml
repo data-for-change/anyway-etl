@@ -4,21 +4,19 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    env:
+      ETL_IMAGE_NAME: "ghcr.io/data-for-change/anyway-etl/anyway-etl"
+      NGINX_IMAGE_NAME: "ghcr.io/data-for-change/anyway-etl/anyway-etl-nginx"
+      AIRFLOW_IMAGE_NAME: "ghcr.io/data-for-change/anyway-etl/anyway-etl-airflow"
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      DFC_IAC_DEPLOY_KEY: ${{ secrets.DFC_IAC_DEPLOY_KEY }}
     steps:
     - uses: actions/checkout@v2
-    - env:
-        ETL_IMAGE_NAME: "ghcr.io/data-for-change/anyway-etl/anyway-etl"
-        NGINX_IMAGE_NAME: "ghcr.io/data-for-change/anyway-etl/anyway-etl-nginx"
-        AIRFLOW_IMAGE_NAME: "ghcr.io/data-for-change/anyway-etl/anyway-etl-airflow"
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        DFC_IAC_DEPLOY_KEY: ${{ secrets.DFC_IAC_DEPLOY_KEY }}
+    - name: Docker login
+      run: echo "${GITHUB_TOKEN}" | docker login ghcr.io -u data-for-change --password-stdin
+    
+    - name: Build and push ETL
       run: |
-        if [[ "${GITHUB_REF}" =~ ^refs/tags/.* ]]; then
-          TAG_NAME="${GITHUB_REF/refs\/tags\//}"
-        else
-          TAG_NAME=""
-        fi
-        echo "${GITHUB_TOKEN}" | docker login ghcr.io -u data-for-change --password-stdin &&\
         if docker pull "${ETL_IMAGE_NAME}:latest"; then
           CACHE_FROM_ARG="--cache-from ${ETL_IMAGE_NAME}:latest"
         else
@@ -26,7 +24,10 @@ jobs:
         fi &&\
         docker build $CACHE_FROM_ARG -t etl . &&\
         docker tag etl "${ETL_IMAGE_NAME}:${GITHUB_SHA}" &&\
-        docker push "${ETL_IMAGE_NAME}:${GITHUB_SHA}" &&\
+        docker push "${ETL_IMAGE_NAME}:${GITHUB_SHA}"
+
+    - name: Build and push Airflow
+      run: |
         if docker pull "${AIRFLOW_IMAGE_NAME}:latest"; then
           CACHE_FROM_ARG="--cache-from ${AIRFLOW_IMAGE_NAME}:latest"
         else
@@ -34,7 +35,10 @@ jobs:
         fi &&\
         docker build $CACHE_FROM_ARG -t airflow airflow_server &&\
         docker tag airflow "${AIRFLOW_IMAGE_NAME}:${GITHUB_SHA}" &&\
-        docker push "${AIRFLOW_IMAGE_NAME}:${GITHUB_SHA}" &&\
+        docker push "${AIRFLOW_IMAGE_NAME}:${GITHUB_SHA}"
+
+    - name: Build and push NGINX    
+      run: |
         if docker pull "${NGINX_IMAGE_NAME}:latest"; then
           CACHE_FROM_ARG="--cache-from ${NGINX_IMAGE_NAME}:latest"
         else
@@ -42,7 +46,15 @@ jobs:
         fi &&\
         docker build $CACHE_FROM_ARG -t aenginx nginx &&\
         docker tag aenginx "${NGINX_IMAGE_NAME}:${GITHUB_SHA}" &&\
-        docker push "${NGINX_IMAGE_NAME}:${GITHUB_SHA}" &&\
+        docker push "${NGINX_IMAGE_NAME}:${GITHUB_SHA}"
+      
+    - name: tag and push images
+      run: |
+        if [[ "${GITHUB_REF}" =~ ^refs/tags/.* ]]; then
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+        else
+          TAG_NAME=""
+        fi
         if [ "${GITHUB_REF}" == "refs/heads/main" ]; then
           PUSH_TAG=latest
         elif [ "${TAG_NAME}" != "" ]; then
@@ -54,18 +66,21 @@ jobs:
           docker tag airflow "${AIRFLOW_IMAGE_NAME}:${PUSH_TAG}" &&\
           docker push "${AIRFLOW_IMAGE_NAME}:${PUSH_TAG}" &&\
           docker tag aenginx "${NGINX_IMAGE_NAME}:${PUSH_TAG}" &&\
-          docker push "${NGINX_IMAGE_NAME}:${PUSH_TAG}" &&\
-          if [ "${TAG_NAME}" != "" ]; then
-            cd `mktemp -d` &&\
-            echo "${DFC_IAC_DEPLOY_KEY}" > dfc_iac_deploy_key &&\
-            chmod 400 dfc_iac_deploy_key &&\
-            export GIT_SSH_COMMAND="ssh -i `pwd`/dfc_iac_deploy_key -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" &&\
-            git clone git@github.com:data-for-change/dfc-iac.git &&\
-            cd dfc-iac &&\
-            git config --global user.name "Anyway ETL CI" &&\
-            git config --global user.email "anyway-etl-ci@localhost" &&\
-            bin/update_anyway_env.py '{"etlNginxImage":"'"${NGINX_IMAGE_NAME}:${TAG_NAME}"'","airflowImage":"'"${AIRFLOW_IMAGE_NAME}:${TAG_NAME}"'"}' &&\
-            git add apps/anyway/.env && git commit -m "automatic update of prod etl anyway" &&\
-            git push origin main
-          fi
+          docker push "${NGINX_IMAGE_NAME}:${PUSH_TAG}"
         fi
+
+    - name: deploy on tag push
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        TAG_NAME=${GITHUB_REF#refs/tags/}
+        cd `mktemp -d` &&\
+        echo "${DFC_IAC_DEPLOY_KEY}" > dfc_iac_deploy_key &&\
+        chmod 400 dfc_iac_deploy_key &&\
+        export GIT_SSH_COMMAND="ssh -i `pwd`/dfc_iac_deploy_key -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" &&\
+        git clone git@github.com:data-for-change/dfc-iac.git &&\
+        cd dfc-iac &&\
+        git config --global user.name "Anyway ETL CI" &&\
+        git config --global user.email "anyway-etl-ci@localhost" &&\
+        bin/update_anyway_env.py '{"etlNginxImage":"'"${NGINX_IMAGE_NAME}:${TAG_NAME}"'","airflowImage":"'"${AIRFLOW_IMAGE_NAME}:${TAG_NAME}"'"}' &&\
+        git add apps/anyway/.env && git commit -m "automatic update of prod etl anyway" &&\
+        git push origin main
