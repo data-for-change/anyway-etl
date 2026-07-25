@@ -82,5 +82,6 @@ jobs:
         git config --global user.name "Anyway ETL CI" &&\
         git config --global user.email "anyway-etl-ci@localhost" &&\
         bin/update_anyway_env.py '{"etlNginxImage":"'"${NGINX_IMAGE_NAME}:${TAG_NAME}"'","airflowImage":"'"${AIRFLOW_IMAGE_NAME}:${TAG_NAME}"'"}' &&\
+        bin/update_anyway_env.py apps-dfc2 '{"etlNginxImage":"'"${NGINX_IMAGE_NAME}:${TAG_NAME}"'","airflowImage":"'"${AIRFLOW_IMAGE_NAME}:${TAG_NAME}"'"}' &&\
         git add apps/anyway/.env && git commit -m "automatic update of prod etl anyway" &&\
         git push origin main
