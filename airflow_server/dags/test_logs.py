@@ -1,21 +1,10 @@
 from airflow import DAG
-from airflow.utils.dates import days_ago
-
+from dag_commons import GENERIC_SETTINGS_FOR_UNSCHEDULED_DAG, get_command_line_for_kubectl_command
 from anyway_etl_airflow.operators.cli_bash_operator import CliBashOperator
 
-
-dag_kwargs = dict(
-    default_args={
-        'owner': 'airflow',
-    },
-    schedule_interval=None,
-    catchup=False,
-    start_date=days_ago(2)
-)
-
-
-with DAG('test-logs', **dag_kwargs) as test_logs:
+TASK_ID = 'test-logs'
+with DAG(TASK_ID, **GENERIC_SETTINGS_FOR_UNSCHEDULED_DAG) as test_logs:
     CliBashOperator(
-        cmd='anyway-etl anyway-kubectl-exec python3 main.py scripts test-airflow',
-        task_id='test_logs'
+        cmd=get_command_line_for_kubectl_command("scripts test-airflow"),
+        task_id=TASK_ID
     )
